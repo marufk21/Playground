@@ -1,0 +1,17 @@
+# Installation
+BAckend (Undertandign Basic Folder Setup needed dependencies with basic code then remove later )
+Frontend (Setup Libraries)
+
+2. Vibe Coding 
+Backend + GEN AI API
+Frontend -- 
+Apps bananai hai... full 
+
+3. Then Deploy later
+
+ye plan ispr focus abhi Installation - Bakcked 
+
+jaise me database and orm konsi use krni hai... and folder structure needed dependixes kya hai vo bta
+
+
+lient -> API -> Service -> DB -> Response
