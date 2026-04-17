@@ -1,0 +1,12 @@
+{
+  "name": "ai-support-app",
+  "private": true,
+  "scripts": {
+    "dev:client": "pnpm --filter ./apps/client dev",
+    "dev:backend": "cd apps/server && python -m uvicorn app.main:app --reload",
+    "dev": "concurrently \"pnpm dev:client\" \"pnpm dev:backend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
