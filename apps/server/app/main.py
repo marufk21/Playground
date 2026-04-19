@@ -10,9 +10,8 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="FastAPI Backend")
 
 origins = [
-    "http://localhost:5173", # dev
-    "https://playground-client-ruby.vercel.app  
-    # prod:vecel
+    "http://localhost:5173",  # dev
+    "https://playground-client-ruby.vercel.app",  # prod: Vercel
 ]
 
 app.add_middleware(
