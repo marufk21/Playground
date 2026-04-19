@@ -1,0 +1,18 @@
+services:
+  server:
+    build: ./apps/server
+    container_name: fastapi_server
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/server:/app
+    restart: always
+
+  client:
+    build: ./apps/client
+    container_name: react_client
+    ports:
+      - "5173:5173"
+    depends_on:
+      - server
+    restart: always
