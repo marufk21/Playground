@@ -11,6 +11,8 @@ app = FastAPI(title="FastAPI Backend")
 
 origins = [
     "http://localhost:5173", # dev
+    "https://playground-client-ruby.vercel.app  
+    # prod:vecel
 ]
 
 app.add_middleware(
