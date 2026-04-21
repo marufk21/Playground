@@ -9,10 +9,6 @@ RUN pnpm install
 
 COPY . .
 
-# Build app
-RUN pnpm build
+EXPOSE 5173
 
-# Serve using simple server
-RUN npm install -g serve
-
-CMD ["serve", "-s", "dist", "-l", "5173"]
+CMD ["pnpm", "dev", "--host", "0.0.0.0"]
