@@ -12,6 +12,7 @@ app = FastAPI(title="FastAPI Backend")
 origins = [
     "http://localhost:5173",  # dev
     "https://playground-client-ruby.vercel.app",  # prod: Vercel
+    "http://13.235.40.226:5173" # prod: AWS
 ]
 
 app.add_middleware(
