@@ -1,0 +1,62 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: ["main"]
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script_stop: true
+          command_timeout: 30m
+          script: |
+            set -Eeuo pipefail
+
+            APP_DIR="$HOME/Playground"
+            cd "$APP_DIR"
+
+            if ! command -v git >/dev/null 2>&1; then
+              echo "git not found on server" >&2
+              exit 1
+            fi
+
+            if ! command -v docker >/dev/null 2>&1; then
+              echo "docker not found on server" >&2
+              exit 1
+            fi
+
+            if docker compose version >/dev/null 2>&1; then
+              COMPOSE="docker compose"
+            elif command -v docker-compose >/dev/null 2>&1; then
+              COMPOSE="docker-compose"
+            else
+              echo "docker compose not found (need docker compose plugin or docker-compose)" >&2
+              exit 1
+            fi
+
+            if [ ! -f "docker-compose.yaml" ]; then
+              echo "docker-compose.yaml not found in $APP_DIR" >&2
+              exit 1
+            fi
+
+            git fetch --prune origin
+            git reset --hard origin/main
+            git clean -fd
+
+            $COMPOSE -f docker-compose.yaml down --remove-orphans
+            $COMPOSE -f docker-compose.yaml build --pull
+            $COMPOSE -f docker-compose.yaml up -d --remove-orphans
+
