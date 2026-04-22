@@ -1,0 +1,24 @@
+# This docker-compose is used on EC2 for pull-based deployment
+# Images are built in GitHub Actions and pulled here
+# DO NOT use 'build' here - use 'image' instead
+
+services:
+  server:
+    image: ${DOCKER_HUB_USERNAME}/playground-server:${COMMIT_SHA:-latest}
+    container_name: fastapi_server
+    ports:
+      - "8000:8000"
+    restart: always
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_BUCKET_NAME=${AWS_BUCKET_NAME}
+      - AWS_REGION=${AWS_REGION}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///./app.db}
+
+  client:
+    image: ${DOCKER_HUB_USERNAME}/playground-client:${COMMIT_SHA:-latest}
+    container_name: react_client
+    ports:
+      - "5173:5173"
+    restart: always

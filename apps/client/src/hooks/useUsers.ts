@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createUser, type CreateUserPayload, getUsers } from "../api/users";
+import { createUser, type CreateUserPayload, getUsers, uploadUserImage } from "../api/users";
 
 export const useUsers = () =>
   useQuery({
@@ -17,3 +17,8 @@ export const useCreateUser = () => {
     },
   });
 };
+
+export const useUploadUserImage = () =>
+  useMutation({
+    mutationFn: (file: File) => uploadUserImage(file),
+  });

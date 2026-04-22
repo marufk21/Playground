@@ -1,65 +1,272 @@
-name: Deploy to EC2
+
+name: Build, Push & Deploy
 
 on:
   push:
     branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      skip_health_check:
+        description: 'Skip health check after deploy'
+        required: false
+        default: 'false'
+        type: boolean
 
 concurrency:
   group: deploy-main
-  cancel-in-progress: true
+  cancel-in-progress: false
+
+env:
+  REGISTRY: docker.io
+  SERVER_IMAGE: ${{ secrets.DOCKER_HUB_USERNAME }}/playground-server
+  CLIENT_IMAGE: ${{ secrets.DOCKER_HUB_USERNAME }}/playground-client
 
 jobs:
-  deploy:
+  # ============================================
+  # JOB 1: Build and Push Docker Images
+  # ============================================
+  build-and-push:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+
+    outputs:
+      server_tag: ${{ steps.meta.outputs.tags['server'] }}
+      client_tag: ${{ steps.meta.outputs.tags['client'] }}
+      commit_sha: ${{ env.COMMIT_SHA }}
 
     steps:
-      - name: Deploy via SSH
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Extract commit SHA
+        id: sha
+        run: echo "sha=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Docker metadata for server
+        id: meta-server
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.SERVER_IMAGE }}
+          tags: |
+            latest
+            ${{ github.sha }}
+            ${{ steps.sha.outputs.sha }}
+
+      - name: Docker metadata for client
+        id: meta-client
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.CLIENT_IMAGE }}
+          tags: |
+            latest
+            ${{ github.sha }}
+            ${{ steps.sha.outputs.sha }}
+
+      # ----------------------
+      # Build Server Image
+      # ----------------------
+      - name: Build and push server image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./apps/server
+          push: true
+          tags: ${{ steps.meta-server.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }}
+            AWS_REGION=${{ secrets.AWS_REGION }}
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+
+      # ----------------------
+      # Build Client Image
+      # ----------------------
+      - name: Build and push client image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./apps/client
+          push: true
+          tags: ${{ steps.meta-client.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Log image info
+        run: |
+          echo "📦 Server image: ${{ steps.meta-server.outputs.tags }}"
+          echo "📦 Client image: ${{ steps.meta-client.outputs.tags }}"
+          echo "COMMIT_SHA=${{ github.sha }}" >> $GITHUB_ENV
+
+  # ============================================
+  # JOB 2: Deploy to EC2 (Pull & Run)
+  # ============================================
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script_stop: true
-          command_timeout: 30m
+          command_timeout: 10m
+          envs: SERVER_IMAGE, CLIENT_IMAGE, COMMMIT_SHA
           script: |
-            set -Eeuo pipefail
+            set -e
+
+            echo "=============================================="
+            echo "🚀 Starting deployment at $(date)"
+            echo "=============================================="
+
+            SERVER_IMAGE="${{ secrets.DOCKER_HUB_USERNAME }}/playground-server"
+            CLIENT_IMAGE="${{ secrets.DOCKER_HUB_USERNAME }}/playground-client"
+            COMMIT_SHA="${{ needs.build-and-push.outputs.commit_sha }}"
+            DOCKER_HUB_USERNAME="${{ secrets.DOCKER_HUB_USERNAME }}"
+            AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
+            AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+            AWS_BUCKET_NAME="${{ secrets.AWS_BUCKET_NAME }}"
+            AWS_REGION="${{ secrets.AWS_REGION }}"
+            DATABASE_URL="${{ secrets.DATABASE_URL }}"
 
             APP_DIR="$HOME/Playground"
             cd "$APP_DIR"
 
-            if ! command -v git >/dev/null 2>&1; then
-              echo "git not found on server" >&2
-              exit 1
-            fi
+            echo "📁 Working directory: $(pwd)"
 
-            if ! command -v docker >/dev/null 2>&1; then
-              echo "docker not found on server" >&2
-              exit 1
-            fi
-
-            if docker compose version >/dev/null 2>&1; then
-              COMPOSE="docker compose"
-            elif command -v docker-compose >/dev/null 2>&1; then
-              COMPOSE="docker-compose"
-            else
-              echo "docker compose not found (need docker compose plugin or docker-compose)" >&2
-              exit 1
-            fi
-
-            if [ ! -f "docker-compose.yaml" ]; then
-              echo "docker-compose.yaml not found in $APP_DIR" >&2
-              exit 1
-            fi
-
-            git fetch --prune origin
-            git reset --hard origin/main
-            git clean -fd
-
-            $COMPOSE -f docker-compose.yaml down --remove-orphans
-            # In case a previous/manual run left containers behind (or a different
-            # compose project name was used), remove the fixed-name containers.
+            # Stop existing containers
+            echo "🛑 Stopping existing containers..."
+            docker compose -f docker-compose.yml down --remove-orphans 2>/dev/null || true
             docker rm -f react_client fastapi_server 2>/dev/null || true
-            $COMPOSE -f docker-compose.yaml build --pull
-            $COMPOSE -f docker-compose.yaml up -d --remove-orphans
 
+            # Create docker-compose.yml with image tags
+            cat > docker-compose.yml << 'EOF'
+            services:
+              server:
+                image: ${DOCKER_HUB_USERNAME}/playground-server:${COMMIT_SHA}
+                container_name: fastapi_server
+                ports:
+                  - "8000:8000"
+                restart: always
+                environment:
+                  - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+                  - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+                  - AWS_BUCKET_NAME=${AWS_BUCKET_NAME}
+                  - AWS_REGION=${AWS_REGION}
+                  - DATABASE_URL=${DATABASE_URL}
+
+              client:
+                image: ${DOCKER_HUB_USERNAME}/playground-client:${COMMIT_SHA}
+                container_name: react_client
+                ports:
+                  - "5173:5173"
+                restart: always
+            EOF
+
+            echo "📄 New docker-compose.yml:"
+            cat docker-compose.yml
+
+            # Pull images
+            echo "📥 Pulling server image..."
+            docker pull "${DOCKER_HUB_USERNAME}/playground-server:${COMMIT_SHA}"
+            echo "📥 Pulling client image..."
+            docker pull "${DOCKER_HUB_USERNAME}/playground-client:${COMMIT_SHA}"
+
+            # Start containers
+            echo "▶️  Starting containers..."
+            docker compose -f docker-compose.yml up -d --remove-orphans
+
+            # Show running containers
+            echo "📋 Running containers:"
+            docker compose -f docker-compose.yml ps
+
+            echo "✅ Deployment completed at $(date)"
+
+  # ============================================
+  # JOB 3: Health Check
+  # ============================================
+  health-check:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Wait for services to be ready
+        run: sleep 15
+
+      - name: Check server health
+        run: |
+          echo "🔍 Checking server health..."
+          for i in {1..5}; do
+            echo "Attempt $i/5..."
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.EC2_HOST }}:8000/ || echo "000")
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Server is healthy (HTTP $HTTP_CODE)"
+              exit 0
+            fi
+            echo "⚠️  Server not ready (HTTP $HTTP_CODE), retrying in 5s..."
+            sleep 5
+          done
+          echo "❌ Server health check failed after 5 attempts"
+          curl -v http://${{ secrets.EC2_HOST }}:8000/
+          exit 1
+
+      - name: Check docs endpoint
+        run: |
+          echo "🔍 Checking /docs endpoint..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.EC2_HOST }}:8000/docs)
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ /docs is accessible (HTTP $HTTP_CODE)"
+          else
+            echo "⚠️  /docs returned HTTP $HTTP_CODE (might be expected)"
+          fi
+
+  # ============================================
+  # JOB 4: Rollback on Failure
+  # ============================================
+  rollback:
+    needs: [deploy, health-check]
+    if: failure()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Rollback to previous version
+        if: needs.health-check.result == 'failure'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          command_timeout: 5m
+          script: |
+            set -e
+            echo "⚠️  Health check failed. Initiating rollback..."
+
+            DOCKER_HUB_USERNAME="${{ secrets.DOCKER_HUB_USERNAME }}"
+            APP_DIR="$HOME/Playground"
+            cd "$APP_DIR"
+
+            # Try to pull and run 'latest' tag
+            docker compose -f docker-compose.yml down --remove-orphans 2>/dev/null || true
+
+            # Update compose to use 'latest' tag
+            sed -i "s/:${COMMIT_SHA}/:latest/g" docker-compose.yml 2>/dev/null || true
+
+            docker pull "${DOCKER_HUB_USERNAME}/playground-server:latest"
+            docker pull "${DOCKER_HUB_USERNAME}/playground-client:latest"
+            docker compose -f docker-compose.yml up -d --remove-orphans
+
+            echo "🔄 Rollback completed"

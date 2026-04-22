@@ -1,12 +1,33 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import inspect, text
 
 from app.api.upload_routes import router as upload_router
 from app.api.user_routes import router as user_router
 from app.db.database import Base, engine
 
+# Ensure models are imported before create_all so SQLAlchemy
+# knows about all tables.
+from app.models import user as _user  # noqa: F401
+
 # Ensures tables are created when app starts.
 Base.metadata.create_all(bind=engine)
+
+
+def sync_sqlite_schema() -> None:
+    inspector = inspect(engine)
+    if "users" not in inspector.get_table_names():
+        return
+
+    existing_columns = {column["name"] for column in inspector.get_columns("users")}
+    if "image_url" in existing_columns:
+        return
+
+    with engine.begin() as connection:
+        connection.execute(text("ALTER TABLE users ADD COLUMN image_url VARCHAR(2048)"))
+
+
+sync_sqlite_schema()
 
 app = FastAPI(title="FastAPI Backend")
 
