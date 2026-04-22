@@ -3,6 +3,7 @@ from app.services.s3 import upload_file
 
 router = APIRouter()
 
+
 @router.post("/upload")
 async def upload_image(file: UploadFile = File(...)):
     if not file.content_type or not file.content_type.startswith("image/"):
@@ -11,13 +12,14 @@ async def upload_image(file: UploadFile = File(...)):
             detail="Only image uploads are allowed.",
         )
 
-    file.file.seek(0)  # Reset file pointer if content was consumed
+    file.file.seek(0)
     try:
         url = upload_file(file)
-    except RuntimeError as exc:
+    except Exception as exc:
+        print(f"Upload route failed: {exc!r}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(exc),
+            detail=f"Upload failed: {exc!r}",
         ) from exc
 
     return {"url": url}
