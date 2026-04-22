@@ -15,6 +15,7 @@ const Home = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const userList = Array.isArray(users) ? users : [];
 
   const previewUrl = useMemo(() => {
     if (!imageFile) return null;
@@ -114,9 +115,9 @@ const Home = () => {
 
       <h2 className="mb-3 text-lg font-semibold">Users</h2>
 
-      {users && users.length > 0 ? (
+      {userList.length > 0 ? (
         <ul className="space-y-2">
-          {users.map((user) => (
+          {userList.map((user) => (
             <li key={user.id} className="rounded border p-3">
               <div className="flex items-center gap-3">
                 {user.image_url ? (

@@ -15,7 +15,17 @@ export type CreateUserPayload = {
 
 export const getUsers = async (): Promise<User[]> => {
   const response = await api.get<User[]>("/users");
-  return response.data;
+  const payload = response.data as User[] | { users?: User[] };
+
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (payload && Array.isArray(payload.users)) {
+    return payload.users;
+  }
+
+  return [];
 };
 
 export const createUser = async (payload: CreateUserPayload): Promise<User> => {
