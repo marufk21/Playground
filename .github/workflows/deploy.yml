@@ -104,8 +104,13 @@ jobs:
 
             echo "Working directory: $(pwd)"
 
+            if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ] || [ -z "$AWS_BUCKET_NAME" ] || [ -z "$AWS_REGION" ] || [ -z "$DATABASE_URL" ]; then
+              echo "Missing one or more deploy-time secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_BUCKET_NAME, AWS_REGION, DATABASE_URL"
+              exit 1
+            fi
+
             echo "Stopping existing containers..."
-            docker compose -f docker-compose.yml down --remove-orphans 2>/dev/null || true
+            docker-compose -f docker-compose.yml down --remove-orphans 2>/dev/null || true
             docker rm -f react_client fastapi_server 2>/dev/null || true
 
             echo "Cleaning unused Docker data..."
@@ -144,10 +149,10 @@ jobs:
             docker pull "${DOCKER_HUB_USERNAME}/playground-client:${COMMIT_SHA}"
 
             echo "Starting containers..."
-            docker compose -f docker-compose.yml up -d --remove-orphans
+            docker-compose -f docker-compose.yml up -d --remove-orphans
 
             echo "Running containers:"
-            docker compose -f docker-compose.yml ps
+            docker-compose -f docker-compose.yml ps
 
             echo "Deployment completed at $(date)"
 
@@ -209,11 +214,11 @@ jobs:
             APP_DIR="$HOME/Playground"
             cd "$APP_DIR"
 
-            docker compose -f docker-compose.yml down --remove-orphans 2>/dev/null || true
+            docker-compose -f docker-compose.yml down --remove-orphans 2>/dev/null || true
             sed -i 's/:[a-f0-9]\{40\}/:latest/g' docker-compose.yml 2>/dev/null || true
 
             docker pull "${DOCKER_HUB_USERNAME}/playground-server:latest"
             docker pull "${DOCKER_HUB_USERNAME}/playground-client:latest"
-            docker compose -f docker-compose.yml up -d --remove-orphans
+            docker-compose -f docker-compose.yml up -d --remove-orphans
 
             echo "Rollback completed"
