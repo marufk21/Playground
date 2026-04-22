@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.upload_routes import router as upload_router
 from app.api.user_routes import router as user_router
 from app.db.database import Base, engine
 
@@ -24,6 +25,7 @@ app.add_middleware(
 )
 
 app.include_router(user_router)
+app.include_router(upload_router)
 
 
 @app.get("/")

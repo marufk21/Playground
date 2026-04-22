@@ -1,13 +1,14 @@
 services:
   server:
-    build: ./apps/server
+    build:
+      context: ./apps/server
     container_name: fastapi_server
     ports:
       - "8000:8000"
     volumes:
       - ./apps/server:/app
     env_file:
-      - ./apps/server/.env   
+      - ./apps/server/.env
     restart: always
 
   client:
@@ -21,5 +22,5 @@ services:
     depends_on:
       - server
     env_file:
-      - ./apps/client/.env   
+      - ./apps/client/.env
     restart: always

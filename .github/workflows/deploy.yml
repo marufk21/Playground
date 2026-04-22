@@ -57,6 +57,9 @@ jobs:
             git clean -fd
 
             $COMPOSE -f docker-compose.yaml down --remove-orphans
+            # In case a previous/manual run left containers behind (or a different
+            # compose project name was used), remove the fixed-name containers.
+            docker rm -f react_client fastapi_server 2>/dev/null || true
             $COMPOSE -f docker-compose.yaml build --pull
             $COMPOSE -f docker-compose.yaml up -d --remove-orphans
 
