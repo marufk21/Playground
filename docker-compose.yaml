@@ -6,6 +6,8 @@ services:
       - "8000:8000"
     volumes:
       - ./apps/server:/app
+    env_file:
+      - ./apps/server/.env   
     restart: always
 
   client:
@@ -18,4 +20,6 @@ services:
       - /app/node_modules
     depends_on:
       - server
+    env_file:
+      - ./apps/client/.env   
     restart: always
