@@ -81,7 +81,7 @@
 
       ## Character vs. Recursive Character TextSplitter
 
-      | Feature                | Character TextSplitter      | Recursive Character TextSplitter    |
+      | Feature                | Character TextSplitter     | Recursive Character TextSplitter    |
       |------------------------|----------------------------|-------------------------------------|
       | Cutting method         | Blind cutting              | Smart, meaning-preserving cutting   |
       | Word splitting         | Words can break            | Tries to keep words and sentences   |
@@ -117,6 +117,59 @@
       - Keeps full ideas or topics together in each chunk.
 
    - Vector Embeddings / Database
-    
+     Vector Store: A database optimized for storing and retrieving high-dimensional embeddings using Approximate Nearest Neighbor (ANN) algorithms.
+
+     
+     ## Relational (Normal) Database vs. Vector Database
+     
+     | Feature             | Relational (Normal) Database                        | Vector Database                                          |
+     |---------------------|-----------------------------------------------------|----------------------------------------------------------|
+     | Data stored         | Structured (tables: rows & columns, text, numbers)  | Embeddings (dense vectors: [0.23, 0.41, ...])            |
+     | Use cases           | User profiles, transactions, logs, banking          | Semantic/RAG/AI/Q&A search, recommendations              |
+     | Search capability   | Exact match/filtering (`SELECT WHERE ...`)          | Semantic/similarity search                               |
+     | Query type          | "Find movies where actor = 'Tom Hanks'"             | "Find movies about space travel"                         |
+     | Indexing            | B-Tree, Hash indexes                                | Vector indexes: HNSW, IVF, PQ                            |
+     | Comparison method   | Equality/range filters                              | Vector distance (cosine similarity, etc.)                |
+     | Strengths           | Fast, structured queries                            | Finds semantically similar items, powers AI search       |
+     
    
- 
+     ## Simple Example Flow
+     
+        10 Lakh Embeddings in DB - like  [0.24, -0.21, 0.67 ...]
+                ↓
+        Vector DB
+        (ANN Indexing: HNSW / IVF algorithms)
+        
+                ↓
+        100 Clusters (~10,000 embeddings each)
+        
+         ┌─────────────┐
+         │ Cluster 1   │ 
+         │ Cluster 2   │
+         │ Cluster 3   │
+         │ ...         │
+         │ Cluster 100 │
+         └─────────────┘
+        
+        User Query
+        "What is NLP?"
+                ↓
+        Query Embedding -  [0.44, -0.21, 0.67 ...]
+                ↓
+        Nearest Cluster Find
+        (example: Cluster 27)
+                ↓
+        Search only 10,000 vectors
+        NOT all 10 lakh
+                ↓
+        Top Similar Chunks
+                ↓
+        LLM
+                ↓
+        Final Answer
+
+   - Retrieval
+     User ke question ke according database se sabse relevant chunks nikalna. Retriever vector DB me search karega aur relevant chunks nikal ke LLM ko dega.
+     
+   1. By Data Source: Tumhara khud ka vector DB nahi bhi ho tab bhi data fetch kar sakte ho (Chat with outside/public data - nothings uses of document Loaders, TextSplitter and many more). like Wikipedia Retriever, Arxiv Retriever, PubMed Retriever and many more
+   2. By Retrieval Strategy: “Data kis style me search hoga?”
