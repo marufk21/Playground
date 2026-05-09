@@ -1,0 +1,228 @@
+0 .Tasks 
+   Backend (GEN AI) -> Frontend 
+   ECR + CI/CD: Bore with Manual Deploy
+   Advanced ECS: Scaling
+
+   Important Links
+   https://chatgpt.com/c/69e2070f-ab54-83e8-9fbb-1a7921dbffec
+   https://chatgpt.com/c/69e208d5-d4dc-83e8-95f7-bd60ec0dc0e7
+   https://ap-south-1.console.aws.amazon.com/ec2/home?region=ap-south-1#ModifyInboundSecurityGroupRules:securityGroupId=sg-0e0d3b340d219d412
+   SSHConnection:   ssh -i ~/newPlayground.pem ubuntu@13.235.40.226
+
+1. Setup and Installation
+   @ Monorepo -> Frontend (React) and Backend (Fast API) 
+     Client -> API -> Service -> DB -> Response
+
+2. Minimal App and Deploy (Best_Practices, EC2, S3, Docker, CI/CD)
+   @ Best Practices (Before): .env(DB URL, API keys), CORS_Setup (Backend),  Python: pip freeze > requirements.txt
+   @ Deploy: Render/Vercel with set path and build commands -> Update URL and .env 
+
+   @ Docker: Write 3 files -> open docker desktop 
+    docker compose up --build - First Time change in requirements.txt ya package.json change ki hai, toh ye run karein:
+    docker compose up -d: App chlane ke liye 
+    docker compose down:  App Stop Karne Ke Liye
+    docker compose ps 5: Status Check Karne Ke Liye
+    docker compose logs -f:nLogs
+
+   @ AWS: EC2 (Non Servless) + Docker
+    EC2 -> create instance (free tier) + elastic IP (IP address connect kro instance se vrna bill aayega khali uhi pda hai) -> Connect > SSH Client > MY PC: Ubuntu (WSL) > Connect & install required things > DOcker* - git clone* > ENV Created & Upadted URL > EC2 pr git pull krna padega docker dibara build krna padega the chnage upadted on AWS > CI/CD
+    Clarification: This time CLient & Server (Both on AWS). but we can also use Vercel (frontend) & Backend (AWS) -> Frontend ka code EC2 pr pda rhega use nhi hoga koi dikkhat - no bill for more you can stop the cpnatiners of frontend
+    Real Production Level -> CI/CD -> Domain/SSL ->  
+   @ CI/CD - Run on EC2 : cat ~/.ssh/authorized_keys > Setup in Repo Secret > Check on Actions in Git
+   Make CI/CD with Cursor
+   @ AWS: S3 -> Setup Bucker -> IAM USERS > Acces Keys (4) -. Backend COde -> Test -> EC2 Update with env ensure > UI frontend 
+   - Impove Workflows > Docker Hub CI
+
+3. GEN AI 
+   @ Langchain Basics
+   - Install langchain (use docs) and config code -> providers (Open API or Hugging face -> API/Locally -  generate tokens and give permissions)
+   - Embeddings (Open AI - HuggingFace)
+   - Chatbot with Streamlit - History
+      Prompts
+   1. Simple Prompt -> One prompt one responses
+   2. System + User Prompt  -> (Chains) One prompt multiple responses mean like talk to assistant
+   3. Prompt Templates: Give you summary of movies Analyzer: 
+   4. Structured Output: Prompt Templates + JSON
+
+   https://drive.google.com/file/d/1ocrLutqXnGfRVDglowbtIPguebAAnxmu/view
+   https://drive.google.com/file/d/1pRtg6YWuLPFamb6GcW4Y3s7hOdOI9FR8/view?usp=sharing
+
+
+   @ RAG
+   Big Document -> Documents Loaders → Text Splitter → Small Chunks → Embeddings → Vector DB → Chatbot Answer
+
+   - Documents Loaders  
+     Convert raw files into document objects that can be processed. It gives you things like metadata and content.  
+     PDF, Website and all—check in langraph websites
+
+   - Text Splitter  
+     Example:
+
+     text/docs_anything = """
+     React is a frontend library.
+     It is created by Meta.
+     Hooks are useful.
+     """
+
+     chunk_size = 40  
+     chunk_overlap = 10  
+
+     Output:
+     [
+       'React is a frontend library.',
+       'library.\nIt is created by Meta.',
+       'Meta.\nHooks are useful.'
+     ]
+
+   1. Character TextSplitter -> Simple text, basic testing, small projects
+   2. Recursive Character TextSplitter (MOST USED) -> PDFs, Websites, RAG apps, Production chatbot, Docs AI  
+      Meaning preserve karta hai.  
+      Difference b/w Character and Recursive Character TextSplitter
+
+      ## Character vs. Recursive Character TextSplitter
+
+      | Feature                | Character TextSplitter     | Recursive Character TextSplitter    |
+      |------------------------|----------------------------|-------------------------------------|
+      | Cutting method         | Blind cutting              | Smart, meaning-preserving cutting   |
+      | Word splitting         | Words can break            | Tries to keep words and sentences   |
+      | Use case               | Basic, small projects      | Production apps, better for docs    |
+      | Usage frequency        | Rarely used                | Most commonly used                  |
+      | Retrieval quality      | Poor (bad retrieval)       | Good (better retrieval)             |
+
+      Example:
+      Original Text:
+      "React is a frontend library. It is created by Meta. Hooks are useful."
+
+      Character TextSplitter (chunk_size=20):
+      - Chunk 1: "React is a fronte"
+      - Chunk 2: "nd library. Hook"
+      - Chunk 3: "s are useful."
+
+      Recursive Character TextSplitter (chunk_size=20):
+      - Chunk 1: "React is a frontend"
+      - Chunk 2: "library."
+      - Chunk 3: "Hooks are useful."
+   
+   3. TokenTextSplitter: OpenAI / Claude apps, Large prompts, Cost optimization, Advanced RAG
+       Why use it? -> Character-based text splitters are unpredictable in terms of token count and model cost, whereas LLMs process text as tokens. Using a TokenTextSplitter gives you precise control over costs and chunk sizes, making it ideal for large prompts and cost optimization.
+
+       React is a frontend library created by Meta
+       Code: TokenTextSplitter (chunk_size = 8)
+       ["React"," is"," a"," frontend"," library"," created"," by"," Meta"] = 8 tokens.
+ 
+   4. MarkdownHeaderTextSplitter – Use for: README, Documentation, Notes, Markdown blogs
+   5. HTMLHeaderTextSplitter – Use for: Website scraping, HTML docs, Blog parser
+   6. Semantic/Meaning-Based TextSplitter (in Developement)
+      - Chunks text by meaning, not by characters or tokens.
+      - Keeps full ideas or topics together in each chunk.
+
+   - Vector Embeddings / Database
+     Vector Store: A database optimized for storing and retrieving high-dimensional embeddings using Approximate Nearest Neighbor (ANN) algorithms.
+
+     
+     ## Relational (Normal) Database vs. Vector Database
+     
+     | Feature             | Relational (Normal) Database                        | Vector Database                                          |
+     |---------------------|-----------------------------------------------------|----------------------------------------------------------|
+     | Data stored         | Structured (tables: rows & columns, text, numbers)  | Embeddings (dense vectors: [0.23, 0.41, ...])            |
+     | Use cases           | User profiles, transactions, logs, banking          | Semantic/RAG/AI/Q&A search, recommendations              |
+     | Search capability   | Exact match/filtering (`SELECT WHERE ...`)          | Semantic/similarity search                               |
+     | Query type          | "Find movies where actor = 'Tom Hanks'"             | "Find movies about space travel"                         |
+     | Indexing            | B-Tree, Hash indexes                                | Vector indexes: HNSW, IVF, PQ                            |
+     | Comparison method   | Equality/range filters                              | Vector distance (cosine similarity, etc.)                |
+     | Strengths           | Fast, structured queries                            | Finds semantically similar items, powers AI search       |
+     
+   
+     ## Simple Example Flow
+     
+        10 Lakh Embeddings in DB - like  [0.24, -0.21, 0.67 ...]
+                ↓
+        Vector DB
+        (ANN Indexing: HNSW / IVF algorithms)
+        
+                ↓
+        100 Clusters (~10,000 embeddings each)
+        
+         ┌─────────────┐
+         │ Cluster 1   │ 
+         │ Cluster 2   │
+         │ Cluster 3   │
+         │ ...         │
+         │ Cluster 100 │
+         └─────────────┘
+        
+        User Query
+        "What is NLP?"
+                ↓
+        Query Embedding -  [0.44, -0.21, 0.67 ...]
+                ↓
+        Nearest Cluster Find
+        (example: Cluster 27)
+                ↓
+        Search only 10,000 vectors
+        NOT all 10 lakh
+                ↓
+        Top Similar Chunks
+                ↓
+        LLM
+                ↓
+        Final Answer
+
+   - Retrieval
+     User ke question ke according database se sabse relevant chunks nikalna. Retriever vector DB me search karega aur relevant chunks nikal ke LLM ko dega.
+     
+   1. By Data Source: Tumhara khud ka vector DB nahi bhi ho tab bhi data fetch kar sakte ho (Chat with outside/public data - nothings uses of document Loaders, TextSplitter and many more). like Wikipedia Retriever, Arxiv Retriever, PubMed Retriever and many more check in docs
+
+   2. By Retrieval Strategy: Data kis style me search hoga?
+    
+    Search Strategies: In most RAG (Retrieval-Augmented Generation) systems, retrievers mainly use three core retrieval strategies. These are the ones you’ll see most often in real projects andtutorials.
+    
+   1. Similarity Search (Most Common)
+      Query embedding sab chunks se compare hoti hai aur jo sabse similar hain unhe return kar diya jata hai.
+      retrieve top-K documents by comparing the query vector to document vectors using similarity metrics such as cosine similarity, dot product, or Euclidean distance. (study in ML)
+
+      Query: "What is gradient descent?"
+      Return:
+      Chunk 1: "Gradient descent is an optimization algorithm that iteratively adjusts parameters to minimize a loss function."
+      Chunk 2: "In machine learning, gradient descent helps to update model weights to reduce prediction errors."
+      Chunk 3: "There are different types of gradient descent algorithms: batch, stochastic, and mini-batch, each with its own trade-offs."
+      
+      Problem:
+      Sabhi chunks lagbhag wahi information de rahe hain ya kaafi overlapping hain, isme diversity nahi milti.
+
+   2. MMR (Max Marginal Relevance)
+      MMR ka use tab hota hai jab query se relevant chunks toh chahiye hi, lekin saath hi answer me kuch diversity bhi ho.
+      Ye approach top-K chunks me se aise chunks select karti hai jo na sirf query ke relevant hain, balki ek dusre se alag (non-redundant) bhi hain.
+
+      Example:
+      - Query: "What is gradient descent?"
+      - Retrieved Chunks:
+        Chunk 1: "Gradient descent is an optimization algorithm used across optimization and machine learning to minimize a given objective function."
+        Chunk 2: "Mini-batch gradient descent allows balancing accuracy and computational efficiency."
+        Chunk 3: "Unlike stochastic gradient descent, batch gradient descent evaluates the gradient on the entire dataset to update the model weights."
+
+      Yaha har chunk mein alag information mil rahi hai (types, applications, comparison), overlap kam hai aur answer me coverage better hota hai.
+      
+   3. MultiQuery Retriever
+      MultiQuery Retriever ka use tab hota hai jab ek single user query ko thoda alag-alag perspectives se phrase karke multiple queries generate ki jati hain. Har ek query se alag-alag relevant chunks retrieve hote hain, phir in sab results ko combine karke deduplicated, diverse, aur zyada informative context LLM ko diya jata hai.
+
+      Example:
+      - User Query: How does gradient descent work?
+      
+        User Query
+         ↓
+        LLM multiple queries banata hai
+         ↓
+        Retriever har query search karta hai
+         ↓
+        Results combine
+
+      - Generated Queries:
+        1. "Explain the steps of gradient descent algorithm."
+        2. "What are the types of gradient descent?"
+        3. "How is gradient descent used in machine learning?"
+      - Har query ke liye relevant chunks retrieve karo, phir sab ko combine & filter karo.
+
+      Iska fayda ye hai ki ek hi user query ke multiple aspects cover ho jate hain, aur specific wordings ki limitation kam hoti hai (i.e., query formulation bias kam hota hai).
+
+
