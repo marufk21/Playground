@@ -171,5 +171,58 @@
    - Retrieval
      User ke question ke according database se sabse relevant chunks nikalna. Retriever vector DB me search karega aur relevant chunks nikal ke LLM ko dega.
      
-   1. By Data Source: Tumhara khud ka vector DB nahi bhi ho tab bhi data fetch kar sakte ho (Chat with outside/public data - nothings uses of document Loaders, TextSplitter and many more). like Wikipedia Retriever, Arxiv Retriever, PubMed Retriever and many more
-   2. By Retrieval Strategy: “Data kis style me search hoga?”
+   1. By Data Source: Tumhara khud ka vector DB nahi bhi ho tab bhi data fetch kar sakte ho (Chat with outside/public data - nothings uses of document Loaders, TextSplitter and many more). like Wikipedia Retriever, Arxiv Retriever, PubMed Retriever and many more check in docs
+
+   2. By Retrieval Strategy: Data kis style me search hoga?
+    
+    Search Strategies: In most RAG (Retrieval-Augmented Generation) systems, retrievers mainly use three core retrieval strategies. These are the ones you’ll see most often in real projects andtutorials.
+    
+   1. Similarity Search (Most Common)
+      Query embedding sab chunks se compare hoti hai aur jo sabse similar hain unhe return kar diya jata hai.
+      retrieve top-K documents by comparing the query vector to document vectors using similarity metrics such as cosine similarity, dot product, or Euclidean distance. (study in ML)
+
+      Query: "What is gradient descent?"
+      Return:
+      Chunk 1: "Gradient descent is an optimization algorithm that iteratively adjusts parameters to minimize a loss function."
+      Chunk 2: "In machine learning, gradient descent helps to update model weights to reduce prediction errors."
+      Chunk 3: "There are different types of gradient descent algorithms: batch, stochastic, and mini-batch, each with its own trade-offs."
+      
+      Problem:
+      Sabhi chunks lagbhag wahi information de rahe hain ya kaafi overlapping hain, isme diversity nahi milti.
+
+   2. MMR (Max Marginal Relevance)
+      MMR ka use tab hota hai jab query se relevant chunks toh chahiye hi, lekin saath hi answer me kuch diversity bhi ho.
+      Ye approach top-K chunks me se aise chunks select karti hai jo na sirf query ke relevant hain, balki ek dusre se alag (non-redundant) bhi hain.
+
+      Example:
+      - Query: "What is gradient descent?"
+      - Retrieved Chunks:
+        Chunk 1: "Gradient descent is an optimization algorithm used across optimization and machine learning to minimize a given objective function."
+        Chunk 2: "Mini-batch gradient descent allows balancing accuracy and computational efficiency."
+        Chunk 3: "Unlike stochastic gradient descent, batch gradient descent evaluates the gradient on the entire dataset to update the model weights."
+
+      Yaha har chunk mein alag information mil rahi hai (types, applications, comparison), overlap kam hai aur answer me coverage better hota hai.
+      
+   3. MultiQuery Retriever
+      MultiQuery Retriever ka use tab hota hai jab ek single user query ko thoda alag-alag perspectives se phrase karke multiple queries generate ki jati hain. Har ek query se alag-alag relevant chunks retrieve hote hain, phir in sab results ko combine karke deduplicated, diverse, aur zyada informative context LLM ko diya jata hai.
+
+      Example:
+      - User Query: How does gradient descent work?
+      
+        User Query
+         ↓
+        LLM multiple queries banata hai
+         ↓
+        Retriever har query search karta hai
+         ↓
+        Results combine
+
+      - Generated Queries:
+        1. "Explain the steps of gradient descent algorithm."
+        2. "What are the types of gradient descent?"
+        3. "How is gradient descent used in machine learning?"
+      - Har query ke liye relevant chunks retrieve karo, phir sab ko combine & filter karo.
+
+      Iska fayda ye hai ki ek hi user query ke multiple aspects cover ho jate hain, aur specific wordings ki limitation kam hoti hai (i.e., query formulation bias kam hota hai).
+
+
