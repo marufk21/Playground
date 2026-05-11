@@ -46,10 +46,10 @@
 
    https://drive.google.com/file/d/1ocrLutqXnGfRVDglowbtIPguebAAnxmu/view
    https://drive.google.com/file/d/1pRtg6YWuLPFamb6GcW4Y3s7hOdOI9FR8/view?usp=sharing
+   https://drive.google.com/file/d/1yfySeYDONghk46oKaf1FmcGqzCt_yDCj/view
 
 
-   @ RAG
-   Big Document -> Documents Loaders → Text Splitter → Small Chunks → Embeddings → Vector DB → Chatbot Answer
+   @ RAG: Big Document -> Documents Loaders → Text Splitter → Small Chunks → Embeddings → Vector DB → Chatbot Answer
 
    - Documents Loaders  
      Convert raw files into document objects that can be processed. It gives you things like metadata and content.  
@@ -225,4 +225,42 @@
 
       Iska fayda ye hai ki ek hi user query ke multiple aspects cover ho jate hain, aur specific wordings ki limitation kam hoti hai (i.e., query formulation bias kam hota hai).
 
+   - Runnable (LCEL — LangChain Expression Language)
+     Pehle "Chain" pattern tha; ab compose karne ke liye Runnable standard hai. Har step ek Runnable: same input/output contract, `.invoke()`, `.batch()`, `.stream()` support.
+   - Runnable = reusable unit (prompt, LLM, parser, retriever, custom function) jo chain me pipe `|` se jod sakte ho.
 
+   1. Sequential Runnable (pipe `|`)
+      - Purana: `LLMChain`, `SequentialChain` type flow — ab `runnable_a | runnable_b | runnable_c`.
+      - Output of A → input of B → input of C. Linear pipeline: prompt | llm | output_parser.
+      - Old vs new: same idea (order matters), bas syntax declarative aur type-friendly ho gaya.
+
+   2. Parallel Runnable (dict/tuple of runnables — "ek sath")
+      - Multiple branches parallel run: e.g. `{"summary": summarizer, "keywords": extractor}` — dono same input se start ho sakte hain, output dict me keys ke hisaab se.
+      - Use case: ek user message pe summary + sentiment + retrieval sab parallel, phir agla step in sab ko merge kare.
+      - LangChain docs: RunnableParallel / dict of runnables pattern check karo.
+
+   3. RunnableLambda (custom sync/async function)
+      - Jab tumhe plain Python logic chahiye (map, filter, format, DB call) bina naye Runnable class likhe.
+      - Example problem: invoke me 2 topics doge to do alag calls sochoge — agar dono ko ek saath fire kar doge to race / duplicate LLM spend; `RunnableLambda` se ek function me order control: pehle topic A process, phir B, ya ek hi merged prompt.
+      - "Ek baar ek hi chale" = sequential control ya single batched prompt lambda ke andar; parallel tabhi jab consciously RunnableParallel use ho.
+
+   4. RunnablePassthrough
+      - Input ko aage bina change pass karo, saath me aur keys add karo — zyada tar `assign` ke sath: purana state + naya field (e.g. retrieved_docs).
+      - RAG pattern: `RunnablePassthrough.assign(context=retriever)` — user query same rahe, saath me context attach ho jaye phir LLM ko jaye.
+
+   5. RunnableBinding / configurable
+      - Same runnable, alag temperature ya model — `.bind()` se tools ya stop sequences LLM pe attach; experiments ke liye useful.
+
+   @ Tools & Agents (Agent = Brain + Tools + Decision Making)
+   - LLM + Tools = Agent (high level): model decide karta hai kab tool call karna hai, output parse karke tool run, phir result wapas LLM — loop jab tak final answer.
+
+
+   - Built-in / ecosystem tools: LangChain / LangGraph docs me prebuilt list — web search, calculator, SQL, Wikipedia, etc. API keys env me rakho.
+
+   - Tavily (search API): production web search tool ke liye common choice; LangChain me `TavilySearchResults` type integrations — docs me exact import/package dekhna (version ke hisaab se badal sakta hai).
+
+   - Custom Tools: `@tool` decorator ya `StructuredTool` — name, description (LLM ke liye important: tool kab use karna hai), args schema (Pydantic), `func` implementation.
+   - Tool message flow: User → Agent → ToolCall → Tool output → Agent → final reply. LangGraph me nodes/edges se is flow ko explicit control mil sakta hai (reliable agents).
+   
+   Langchains: (Fixed flow) - RAG, Simple Agents like chatbots, AI Apps
+   LangGraph: (AI decides flow) - Complex Agents with multiple tools, Loops/decisions, Multi-step workflows
