@@ -268,11 +268,74 @@
 
 
 4. Design Patterns
-   App me ye problem baar baar aati hai → isko clean tareeke se solve karne ka ek famous structure/pattern.
-,  Singleton Pattern, Module Pattern, Factory Pattern, Proxy Pattern, Observer Pattern, Prototype Pattern
+   App me bar bar aane wali common problems ko systematically solve karne ke liye design patterns ka use hota hai.
+
+   Do main category hain (interviews + real projects dono me important):
+   - Classic Patterns (Singleton, Module, Factory, Proxy, Observer, Prototype): General programming/OOP/JS/infra problems ke solutions.
+   - React-specific Patterns (neeche @ React Design Patterns section): UI, state management, component composition ke solutions.
+
+   --- Classic Patterns — Short Notes ---
+
+   1) Singleton Pattern
+      Idea: Ek cheez ka poori app me sirf ek instance ho (duplicate na bane).
+      Example: Axios Client ya Database Connection ko ek hi jagah create karke reuse karna.
+
+   2) Module Pattern
+      Idea: Implementation details ko hide karna, sirf public API expose karna (encapsulation).
+      Example:
+      ```js
+      const Auth = (() => {
+        let token = "123";
+        return {
+          getToken() {
+            return token;
+          }
+        };
+      })();
+      ```
+      Utility files aksar isi pattern pe hoti hain.
+
+   3) Factory Pattern
+      Idea: Kisi condition/input ke basis pe alag-alag object/component banana ek function ke through.
+      Example: Button ka type (primary/secondary) ya user role ke hisaab se different config/object return karwana.
+      ```js
+      function createButton(type) {
+        if (type === "primary") return <PrimaryButton />;
+        if (type === "secondary") return <SecondaryButton />;
+        return <DefaultButton />;
+      }
+      ```
+      React me bhi factory pattern ka use hota hai — hooks, component factories. 
+      *Interview line*: Factory pattern se object/component creation scalable aur DRY hota hai.
+
+   4) Proxy Pattern
+      Direct frontend code me kam likhte hain, par andar hi andar kai jagah use hota hai.
+      Example use cases: 
+      - State management (e.g., state.user.name = "Maruf")
+      - API wrappers (e.g., api.get("/users"))
+
+   5) Observer Pattern
+      Idea: Change detect hote hi subscribed cheezein auto update ho jayein.
+      - React: Observer pattern ka supercharged version hai (state change → re-render). 
+      - `useEffect` dependencies, Redux/Zustand subscriptions, `window.addEventListener`, WebSocket listeners — sab observer pattern ki example hain.
+
+   6) Prototype Pattern
+      Idea: Ek existing object ko "template" ki tarah use karke naye object banana.
+      - JS core: Prototype chain (`Object.create(proto)`), classes ke andar bhi prototype hota hai.
+      - React: Prototype pattern direct rarely bola jata hai, but concepts jaise default props, immutable shared config, ya component template/composition iske use cases hain.
+      - *Interview* — Prototype vs. Class: JS me inheritance prototype-based hai, classical inheritance nahi.
 
  @ React Design Patterns 
-   Developers already use but unknowingly for writing reusable code, clean architecture, scalable apps, less bugs
+   Ye React / UI world ke patterns hain — zyada tar tum already use karte ho, bas naam se pehchan nahi hoti.
+   Goal: reusable code, clean architecture, scalable apps, kam bugs — same classic patterns ki tarah, bas problem domain UI + state + composition hai.
+
+   Quick mental map (classic ↔ React feel):
+   - Observer ↔ state + effects + re-render
+   - Module ↔ files, hooks, feature folders
+   - Factory ↔ creators, configurable components
+   - Proxy ↔ wrappers, memo, boundaries
+   - Singleton ↔ shared clients / module-level instances
+   - Prototype ↔ cloning defaults / shared immutable templates
 
  1. Presentational & Container Pattern
     Problem - Agar ek component:UI, State, API sab handle kre component bda hojata hai..
