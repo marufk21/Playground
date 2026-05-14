@@ -264,3 +264,230 @@
    
    Langchains: (Fixed flow) - RAG, Simple Agents like chatbots, AI Apps
    LangGraph: (AI decides flow) - Complex Agents with multiple tools, Loops/decisions, Multi-step workflows
+
+
+
+4. Design Patterns
+   App me ye problem baar baar aati hai → isko clean tareeke se solve karne ka ek famous structure/pattern.
+,  Singleton Pattern, Module Pattern, Factory Pattern, Proxy Pattern, Observer Pattern, Prototype Pattern
+
+ @ React Design Patterns 
+   Developers already use but unknowingly for writing reusable code, clean architecture, scalable apps, less bugs
+
+ 1. Presentational & Container Pattern
+    Problem - Agar ek component:UI, State, API sab handle kre component bda hojata hai..
+    Pattern Solution - Split into: 
+    
+ ## Container Component: The container component, which acts as the component responsible for the data fetching or computation.
+
+    function UsersContainer() {
+       const [users, setUsers] = useState([])
+     
+       useEffect(() => {
+         fetch("/api/users")
+           .then(res => res.json())
+           .then(setUsers)
+       }, [])
+     
+       return <UsersList users={users} />
+     }   
+
+ ## Presentational Component: The presentation component, whose job is to render the fetched data or computed value on the UI(user interface).
+
+    function UsersList({ users }) {
+    return (
+      <div>
+        {users.map(user => (
+          <p key={user.id}>{user.name}</p>
+        ))}
+      </div>
+    )
+  }
+
+2. Custom Hook Pattern
+
+   Problem: Same logic multiple jagah repeat. fetching API, form handling, auth, debounce
+
+   Pattern Solution: Custom Hook -> useAuth(), useDebounce(), useTheme(), useCart(), useSocket() and many more you make.
+   
+   Example - creating a custom hook that fetches users
+   
+   function useUsers() {
+     const [users, setUsers] = useState([])   
+
+     useEffect(() => {
+       fetch("/api/users")
+         .then(res => res.json())
+         .then(setUsers)
+     }, [])   
+
+     return users
+   }
+
+   importing the custom hook to a component and fetch the users
+  
+    function App() {
+    const users = useUsers  ()
+
+    return <UsersList users={users} />
+  }
+
+3. Provider Pattern
+   
+   Problem: Prop drilling — Passing props like `user` through every component such as Navbar, Sidebar, and Profile.
+   Example:
+   <App user={user} />
+
+   Solution: Use the Provider pattern with Context API or state libraries (e.g. Redux, Zustand) to avoid prop drilling and share state globally.
+   Advantages: No more prop drilling, centralized state, cleaner architecture.
+
+   Usage: In your root component (e.g. App.js)
+   <AuthProvider>
+     <App />
+   </AuthProvider>
+
+   In any nested component, consume the context: which logic write in the store
+   const user = useContext(AuthContext);
+
+4. Compound Component Pattern   
+
+   Compound components are very important in UI libraries—they allow parent-child components to work together naturally. Common examples include Modal, Accordion, Tabs, and Select etc 
+    
+   This pattern is widely used in production-grade UI codebases and by popular libraries such as Material UI, Radix UI, and Ant Design. 
+   Benefits include: clean API, flexible UI, reusability, and a library-like feel.
+
+   Parent Component: Toggle parennt componet that shares on, off, and button functionality using in Context API
+   
+   import React, { createContext, useState } from "react";
+   const ToggleContext = createContext();
+   
+   function Toggle({ children }) {
+     const [on, setOn] = useState(false);
+     const toggle = () => setOn(!on);
+   
+     return (
+       <ToggleContext.Provider value={{ on, toggle }}>
+         {children}
+       </ToggleContext.Provider>
+     );
+   }
+   
+   Toggle.On = function ToggleOn({ children }) {
+     const { on } = useContext(ToggleContext);
+     return on ? children : null;
+   };
+   
+   Toggle.Off = function ToggleOff({ children }) {
+     const { on } = useContext(ToggleContext);
+     return on ? null : children;
+   };
+   
+   Toggle.Button = function ToggleButton(props) {
+     const { on, toggle } = useContext(ToggleContext);
+     return <button onClick={toggle} {...props} />;
+   };
+   
+   The Children consume this state automatically - on, off, and button
+
+   function App() {
+     return (
+       <Toggle>
+         <Toggle.On>The button is on</Toggle.On>
+         <Toggle.Off>The button is off</Toggle.Off>
+         <Toggle.Button>Toggle</Toggle.Button>
+       </Toggle>
+     );
+   }
+
+
+5. Reducer Pattern
+
+   Reducer pattern state management ke liye React me kaafi use hota hai, khaaskar jab state thoda complex ho, ya alag alag actions par state ko update karna ho.
+
+   Simple Example: Counter with useReducer
+
+   import React, { useReducer } from "react";
+
+   Reducer function
+   function counterReducer(state, action) {
+     switch (action.type) {
+       case 'increment':
+         return { count: state.count + 1 };
+       case 'decrement':
+         return { count: state.count - 1 };
+       default:
+         throw new Error("Unknown action: " + action.type);
+     }
+   }
+
+   function Counter() {
+     const [state, dispatch] = useReducer(counterReducer, { count: 0 });
+
+     return (
+       <div>
+         <button onClick={() => dispatch({ type: 'decrement' })}>-</button>
+         <span>{state.count}</span>
+         <button onClick={() => dispatch({ type: 'increment' })}>+</button>
+       </div>
+     );
+   }
+
+    useReducer ka fayda:
+    - State update logic ek jagah concentrate ho jata hai (reducer me)
+    - Actions ke through state ko change karte hain, isse readability aur maintainability badhti hai
+    - Scalable hota hai jab multiple actions ya complex logic ho
+
+6. Higher Order Component
+   Ek hi logic (jaise Auth, Loading, Theme, Permissions) multiple components me reuse karne ke liye pehle Higher Order Components use hote the, lekin aajkal custom hooks aur providers jyada popular hain.
+
+   // App.jsx
+   import React, { useState } from "react";
+   import higherOrderComponent from "./hoc/higherOrderComponent.js";
+   import AvatarComponent from "./components/AvatarComponent";
+   
+   // Wrap kar diya
+   const SampleHOC = higherOrderComponent(AvatarComponent);
+   
+   export default function App() {
+     return (
+       <SampleHOC description="Frontend Engineer" />
+     );
+   }
+   
+   // HOC: hoc/higherOrderComponent.js
+   const higherOrderComponent = (Component) => {
+     return function EnhancedComponent(props) {
+       const [name] = useState("John Doe");
+   
+       return (
+         <Component
+           name={name}
+           {...props}
+         />
+       );
+     };
+   };
+   
+   // Normal Component: components/AvatarComponent.jsx
+   const AvatarComponent = (props) => {
+     return (
+       <div>
+         <div>{props.name}</div>
+         <div>{props.description}</div>
+       </div>
+     ); 
+   };
+
+
+7. Render Props Pattern
+   Component apna logic share kare using function. Older Pattern but interviews me puchte. Mostly custom hooks ne replace kar diya.
+
+  Main Component 
+  <DataFetcher render={(data) => <Users users={data} />} />
+
+  Child Component 
+  function DataFetcher({ render }) {
+  const [data, setData] = useState([])
+  return render(data)}
+
+
