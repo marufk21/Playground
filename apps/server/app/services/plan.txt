@@ -1,273 +1,4 @@
-0 .Tasks 
-   Backend (GEN AI) -> Frontend 
-   ECR + CI/CD: Bore with Manual Deploy
-   Advanced ECS: Scaling
-
-   Important Links
-   https://chatgpt.com/c/69e2070f-ab54-83e8-9fbb-1a7921dbffec
-   https://chatgpt.com/c/69e208d5-d4dc-83e8-95f7-bd60ec0dc0e7
-   https://ap-south-1.console.aws.amazon.com/ec2/home?region=ap-south-1#ModifyInboundSecurityGroupRules:securityGroupId=sg-0e0d3b340d219d412
-   SSHConnection:   ssh -i ~/newPlayground.pem ubuntu@13.235.40.226
-
-1. Setup and Installation
-   @ Monorepo -> Frontend (React) and Backend (Fast API) 
-     Client -> API -> Service -> DB -> Response
-
-2. Minimal App and Deploy (Best_Practices, EC2, S3, Docker, CI/CD)
-   @ Best Practices (Before): .env(DB URL, API keys), CORS_Setup (Backend),  Python: pip freeze > requirements.txt
-   @ Deploy: Render/Vercel with set path and build commands -> Update URL and .env 
-
-   @ Docker: Write 3 files -> open docker desktop 
-    docker compose up --build - First Time change in requirements.txt ya package.json change ki hai, toh ye run karein:
-    docker compose up -d: App chlane ke liye 
-    docker compose down:  App Stop Karne Ke Liye
-    docker compose ps 5: Status Check Karne Ke Liye
-    docker compose logs -f:nLogs
-
-   @ AWS: EC2 (Non Servless) + Docker
-    EC2 -> create instance (free tier) + elastic IP (IP address connect kro instance se vrna bill aayega khali uhi pda hai) -> Connect > SSH Client > MY PC: Ubuntu (WSL) > Connect & install required things > DOcker* - git clone* > ENV Created & Upadted URL > EC2 pr git pull krna padega docker dibara build krna padega the chnage upadted on AWS > CI/CD
-    Clarification: This time CLient & Server (Both on AWS). but we can also use Vercel (frontend) & Backend (AWS) -> Frontend ka code EC2 pr pda rhega use nhi hoga koi dikkhat - no bill for more you can stop the cpnatiners of frontend
-    Real Production Level -> CI/CD -> Domain/SSL ->  
-   @ CI/CD - Run on EC2 : cat ~/.ssh/authorized_keys > Setup in Repo Secret > Check on Actions in Git
-   Make CI/CD with Cursor
-   @ AWS: S3 -> Setup Bucker -> IAM USERS > Acces Keys (4) -. Backend COde -> Test -> EC2 Update with env ensure > UI frontend 
-   - Impove Workflows > Docker Hub CI
-
-3. GEN AI 
-   @ Langchain Basics
-   - Install langchain (use docs) and config code -> providers (Open API or Hugging face -> API/Locally -  generate tokens and give permissions)
-   - Embeddings (Open AI - HuggingFace)
-   - Chatbot with Streamlit - History
-      Prompts
-   1. Simple Prompt -> One prompt one responses
-   2. System + User Prompt  -> (Chains) One prompt multiple responses mean like talk to assistant
-   3. Prompt Templates: Give you summary of movies Analyzer: 
-   4. Structured Output: Prompt Templates + JSON
-
-   https://drive.google.com/file/d/1ocrLutqXnGfRVDglowbtIPguebAAnxmu/view
-   https://drive.google.com/file/d/1pRtg6YWuLPFamb6GcW4Y3s7hOdOI9FR8/view?usp=sharing
-   https://drive.google.com/file/d/1yfySeYDONghk46oKaf1FmcGqzCt_yDCj/view
-
-
-   @ RAG: Big Document -> Documents Loaders → Text Splitter → Small Chunks → Embeddings → Vector DB → Chatbot Answer
-
-   - Documents Loaders  
-     Convert raw files into document objects that can be processed. It gives you things like metadata and content.  
-     PDF, Website and all—check in langraph websites
-
-   - Text Splitter  
-     Example:
-
-     text/docs_anything = """
-     React is a frontend library.
-     It is created by Meta.
-     Hooks are useful.
-     """
-
-     chunk_size = 40  
-     chunk_overlap = 10  
-
-     Output:
-     [
-       'React is a frontend library.',
-       'library.\nIt is created by Meta.',
-       'Meta.\nHooks are useful.'
-     ]
-
-   1. Character TextSplitter -> Simple text, basic testing, small projects
-   2. Recursive Character TextSplitter (MOST USED) -> PDFs, Websites, RAG apps, Production chatbot, Docs AI  
-      Meaning preserve karta hai.  
-      Difference b/w Character and Recursive Character TextSplitter
-
-      ## Character vs. Recursive Character TextSplitter
-
-      | Feature                | Character TextSplitter     | Recursive Character TextSplitter    |
-      |------------------------|----------------------------|-------------------------------------|
-      | Cutting method         | Blind cutting              | Smart, meaning-preserving cutting   |
-      | Word splitting         | Words can break            | Tries to keep words and sentences   |
-      | Use case               | Basic, small projects      | Production apps, better for docs    |
-      | Usage frequency        | Rarely used                | Most commonly used                  |
-      | Retrieval quality      | Poor (bad retrieval)       | Good (better retrieval)             |
-
-      Example:
-      Original Text:
-      "React is a frontend library. It is created by Meta. Hooks are useful."
-
-      Character TextSplitter (chunk_size=20):
-      - Chunk 1: "React is a fronte"
-      - Chunk 2: "nd library. Hook"
-      - Chunk 3: "s are useful."
-
-      Recursive Character TextSplitter (chunk_size=20):
-      - Chunk 1: "React is a frontend"
-      - Chunk 2: "library."
-      - Chunk 3: "Hooks are useful."
-   
-   3. TokenTextSplitter: OpenAI / Claude apps, Large prompts, Cost optimization, Advanced RAG
-       Why use it? -> Character-based text splitters are unpredictable in terms of token count and model cost, whereas LLMs process text as tokens. Using a TokenTextSplitter gives you precise control over costs and chunk sizes, making it ideal for large prompts and cost optimization.
-
-       React is a frontend library created by Meta
-       Code: TokenTextSplitter (chunk_size = 8)
-       ["React"," is"," a"," frontend"," library"," created"," by"," Meta"] = 8 tokens.
- 
-   4. MarkdownHeaderTextSplitter – Use for: README, Documentation, Notes, Markdown blogs
-   5. HTMLHeaderTextSplitter – Use for: Website scraping, HTML docs, Blog parser
-   6. Semantic/Meaning-Based TextSplitter (in Developement)
-      - Chunks text by meaning, not by characters or tokens.
-      - Keeps full ideas or topics together in each chunk.
-
-   - Vector Embeddings / Database
-     Vector Store: A database optimized for storing and retrieving high-dimensional embeddings using Approximate Nearest Neighbor (ANN) algorithms.
-
-     
-     ## Relational (Normal) Database vs. Vector Database
-     
-     | Feature             | Relational (Normal) Database                        | Vector Database                                          |
-     |---------------------|-----------------------------------------------------|----------------------------------------------------------|
-     | Data stored         | Structured (tables: rows & columns, text, numbers)  | Embeddings (dense vectors: [0.23, 0.41, ...])            |
-     | Use cases           | User profiles, transactions, logs, banking          | Semantic/RAG/AI/Q&A search, recommendations              |
-     | Search capability   | Exact match/filtering (`SELECT WHERE ...`)          | Semantic/similarity search                               |
-     | Query type          | "Find movies where actor = 'Tom Hanks'"             | "Find movies about space travel"                         |
-     | Indexing            | B-Tree, Hash indexes                                | Vector indexes: HNSW, IVF, PQ                            |
-     | Comparison method   | Equality/range filters                              | Vector distance (cosine similarity, etc.)                |
-     | Strengths           | Fast, structured queries                            | Finds semantically similar items, powers AI search       |
-     
-   
-     ## Simple Example Flow
-     
-        10 Lakh Embeddings in DB - like  [0.24, -0.21, 0.67 ...]
-                ↓
-        Vector DB
-        (ANN Indexing: HNSW / IVF algorithms)
-        
-                ↓
-        100 Clusters (~10,000 embeddings each)
-        
-         ┌─────────────┐
-         │ Cluster 1   │ 
-         │ Cluster 2   │
-         │ Cluster 3   │
-         │ ...         │
-         │ Cluster 100 │
-         └─────────────┘
-        
-        User Query
-        "What is NLP?"
-                ↓
-        Query Embedding -  [0.44, -0.21, 0.67 ...]
-                ↓
-        Nearest Cluster Find
-        (example: Cluster 27)
-                ↓
-        Search only 10,000 vectors
-        NOT all 10 lakh
-                ↓
-        Top Similar Chunks
-                ↓
-        LLM
-                ↓
-        Final Answer
-
-   - Retrieval
-     User ke question ke according database se sabse relevant chunks nikalna. Retriever vector DB me search karega aur relevant chunks nikal ke LLM ko dega.
-     
-   1. By Data Source: Tumhara khud ka vector DB nahi bhi ho tab bhi data fetch kar sakte ho (Chat with outside/public data - nothings uses of document Loaders, TextSplitter and many more). like Wikipedia Retriever, Arxiv Retriever, PubMed Retriever and many more check in docs
-
-   2. By Retrieval Strategy: Data kis style me search hoga?
-    
-    Search Strategies: In most RAG (Retrieval-Augmented Generation) systems, retrievers mainly use three core retrieval strategies. These are the ones you’ll see most often in real projects andtutorials.
-    
-   1. Similarity Search (Most Common)
-      Query embedding sab chunks se compare hoti hai aur jo sabse similar hain unhe return kar diya jata hai.
-      retrieve top-K documents by comparing the query vector to document vectors using similarity metrics such as cosine similarity, dot product, or Euclidean distance. (study in ML)
-
-      Query: "What is gradient descent?"
-      Return:
-      Chunk 1: "Gradient descent is an optimization algorithm that iteratively adjusts parameters to minimize a loss function."
-      Chunk 2: "In machine learning, gradient descent helps to update model weights to reduce prediction errors."
-      Chunk 3: "There are different types of gradient descent algorithms: batch, stochastic, and mini-batch, each with its own trade-offs."
-      
-      Problem:
-      Sabhi chunks lagbhag wahi information de rahe hain ya kaafi overlapping hain, isme diversity nahi milti.
-
-   2. MMR (Max Marginal Relevance)
-      MMR ka use tab hota hai jab query se relevant chunks toh chahiye hi, lekin saath hi answer me kuch diversity bhi ho.
-      Ye approach top-K chunks me se aise chunks select karti hai jo na sirf query ke relevant hain, balki ek dusre se alag (non-redundant) bhi hain.
-
-      Example:
-      - Query: "What is gradient descent?"
-      - Retrieved Chunks:
-        Chunk 1: "Gradient descent is an optimization algorithm used across optimization and machine learning to minimize a given objective function."
-        Chunk 2: "Mini-batch gradient descent allows balancing accuracy and computational efficiency."
-        Chunk 3: "Unlike stochastic gradient descent, batch gradient descent evaluates the gradient on the entire dataset to update the model weights."
-
-      Yaha har chunk mein alag information mil rahi hai (types, applications, comparison), overlap kam hai aur answer me coverage better hota hai.
-      
-   3. MultiQuery Retriever
-      MultiQuery Retriever ka use tab hota hai jab ek single user query ko thoda alag-alag perspectives se phrase karke multiple queries generate ki jati hain. Har ek query se alag-alag relevant chunks retrieve hote hain, phir in sab results ko combine karke deduplicated, diverse, aur zyada informative context LLM ko diya jata hai.
-
-      Example:
-      - User Query: How does gradient descent work?
-      
-        User Query
-         ↓
-        LLM multiple queries banata hai
-         ↓
-        Retriever har query search karta hai
-         ↓
-        Results combine
-
-      - Generated Queries:
-        1. "Explain the steps of gradient descent algorithm."
-        2. "What are the types of gradient descent?"
-        3. "How is gradient descent used in machine learning?"
-      - Har query ke liye relevant chunks retrieve karo, phir sab ko combine & filter karo.
-
-      Iska fayda ye hai ki ek hi user query ke multiple aspects cover ho jate hain, aur specific wordings ki limitation kam hoti hai (i.e., query formulation bias kam hota hai).
-
-   - Runnable (LCEL — LangChain Expression Language)
-     Pehle "Chain" pattern tha; ab compose karne ke liye Runnable standard hai. Har step ek Runnable: same input/output contract, `.invoke()`, `.batch()`, `.stream()` support.
-   - Runnable = reusable unit (prompt, LLM, parser, retriever, custom function) jo chain me pipe `|` se jod sakte ho.
-
-   1. Sequential Runnable (pipe `|`)
-      - Purana: `LLMChain`, `SequentialChain` type flow — ab `runnable_a | runnable_b | runnable_c`.
-      - Output of A → input of B → input of C. Linear pipeline: prompt | llm | output_parser.
-      - Old vs new: same idea (order matters), bas syntax declarative aur type-friendly ho gaya.
-
-   2. Parallel Runnable (dict/tuple of runnables — "ek sath")
-      - Multiple branches parallel run: e.g. `{"summary": summarizer, "keywords": extractor}` — dono same input se start ho sakte hain, output dict me keys ke hisaab se.
-      - Use case: ek user message pe summary + sentiment + retrieval sab parallel, phir agla step in sab ko merge kare.
-      - LangChain docs: RunnableParallel / dict of runnables pattern check karo.
-
-   3. RunnableLambda (custom sync/async function)
-      - Jab tumhe plain Python logic chahiye (map, filter, format, DB call) bina naye Runnable class likhe.
-      - Example problem: invoke me 2 topics doge to do alag calls sochoge — agar dono ko ek saath fire kar doge to race / duplicate LLM spend; `RunnableLambda` se ek function me order control: pehle topic A process, phir B, ya ek hi merged prompt.
-      - "Ek baar ek hi chale" = sequential control ya single batched prompt lambda ke andar; parallel tabhi jab consciously RunnableParallel use ho.
-
-   4. RunnablePassthrough
-      - Input ko aage bina change pass karo, saath me aur keys add karo — zyada tar `assign` ke sath: purana state + naya field (e.g. retrieved_docs).
-      - RAG pattern: `RunnablePassthrough.assign(context=retriever)` — user query same rahe, saath me context attach ho jaye phir LLM ko jaye.
-
-   5. RunnableBinding / configurable
-      - Same runnable, alag temperature ya model — `.bind()` se tools ya stop sequences LLM pe attach; experiments ke liye useful.
-
-   @ Tools & Agents (Agent = Brain + Tools + Decision Making)
-   - LLM + Tools = Agent (high level): model decide karta hai kab tool call karna hai, output parse karke tool run, phir result wapas LLM — loop jab tak final answer.
-
-
-   - Built-in / ecosystem tools: LangChain / LangGraph docs me prebuilt list — web search, calculator, SQL, Wikipedia, etc. API keys env me rakho.
-
-   - Tavily (search API): production web search tool ke liye common choice; LangChain me `TavilySearchResults` type integrations — docs me exact import/package dekhna (version ke hisaab se badal sakta hai).
-
-   - Custom Tools: `@tool` decorator ya `StructuredTool` — name, description (LLM ke liye important: tool kab use karna hai), args schema (Pydantic), `func` implementation.
-   - Tool message flow: User → Agent → ToolCall → Tool output → Agent → final reply. LangGraph me nodes/edges se is flow ko explicit control mil sakta hai (reliable agents).
-   
-   Langchains: (Fixed flow) - RAG, Simple Agents like chatbots, AI Apps
-   LangGraph: (AI decides flow) - Complex Agents with multiple tools, Loops/decisions, Multi-step workflows
-
-
-
-4. Design Patterns
+# Design Patterns
    App me bar bar aane wali common problems ko systematically solve karne ke liye design patterns ka use hota hai.
 
    Do main category hain (interviews + real projects dono me important):
@@ -541,7 +272,6 @@
      ); 
    };
 
-
 7. Render Props Pattern
    Component apna logic share kare using function. Older Pattern but interviews me puchte. Mostly custom hooks ne replace kar diya.
 
@@ -554,3 +284,364 @@
   return render(data)}
 
 
+0 .Tasks 
+   Backend (GEN AI) -> Frontend 
+   ECR + CI/CD: Bore with Manual Deploy
+   Advanced ECS: Scaling
+
+   Important Links
+   https://chatgpt.com/c/69e2070f-ab54-83e8-9fbb-1a7921dbffec
+   https://chatgpt.com/c/69e208d5-d4dc-83e8-95f7-bd60ec0dc0e7
+   https://ap-south-1.console.aws.amazon.com/ec2/home?region=ap-south-1#ModifyInboundSecurityGroupRules:securityGroupId=sg-0e0d3b340d219d412
+   SSHConnection:   ssh -i ~/newPlayground.pem ubuntu@13.235.40.226
+
+1. Setup and Installation
+   @ Monorepo -> Frontend (React) and Backend (Fast API) 
+     Client -> API -> Service -> DB -> Response
+
+2. Minimal App and Deploy (Best_Practices, EC2, S3, Docker, CI/CD)
+   @ Best Practices (Before): .env(DB URL, API keys), CORS_Setup (Backend),  Python: pip freeze > requirements.txt
+   @ Deploy: Render/Vercel with set path and build commands -> Update URL and .env 
+
+   @ Docker: Write 3 files -> open docker desktop 
+    docker compose up --build - First Time change in requirements.txt ya package.json change ki hai, toh ye run karein:
+    docker compose up -d: App chlane ke liye 
+    docker compose down:  App Stop Karne Ke Liye
+    docker compose ps 5: Status Check Karne Ke Liye
+    docker compose logs -f:nLogs
+
+   @ AWS: EC2 (Non Servless) + Docker
+    EC2 -> create instance (free tier) + elastic IP (IP address connect kro instance se vrna bill aayega khali uhi pda hai) -> Connect > SSH Client > MY PC: Ubuntu (WSL) > Connect & install required things > DOcker* - git clone* > ENV Created & Upadted URL > EC2 pr git pull krna padega docker dibara build krna padega the chnage upadted on AWS > CI/CD
+    Clarification: This time CLient & Server (Both on AWS). but we can also use Vercel (frontend) & Backend (AWS) -> Frontend ka code EC2 pr pda rhega use nhi hoga koi dikkhat - no bill for more you can stop the cpnatiners of frontend
+    Real Production Level -> CI/CD -> Domain/SSL ->  
+   @ CI/CD - Run on EC2 : cat ~/.ssh/authorized_keys > Setup in Repo Secret > Check on Actions in Git
+   Make CI/CD with Cursor
+   @ AWS: S3 -> Setup Bucker -> IAM USERS > Acces Keys (4) -. Backend COde -> Test -> EC2 Update with env ensure > UI frontend 
+   - Impove Workflows > Docker Hub CI
+
+3. GEN AI 
+   @ Langchain Basics
+   - Install langchain (use docs) and config code -> providers (Open API or Hugging face -> API/Locally -  generate tokens and give permissions)
+   - Embeddings (Open AI - HuggingFace)
+   - Chatbot with Streamlit - History
+      Prompts
+   1. Simple Prompt -> One prompt one responses
+   2. System + User Prompt  -> (Chains) One prompt multiple responses mean like talk to assistant
+   3. Prompt Templates: Give you summary of movies Analyzer: 
+   4. Structured Output: Prompt Templates + JSON
+
+   https://drive.google.com/file/d/1ocrLutqXnGfRVDglowbtIPguebAAnxmu/view
+   https://drive.google.com/file/d/1pRtg6YWuLPFamb6GcW4Y3s7hOdOI9FR8/view?usp=sharing
+   https://drive.google.com/file/d/1yfySeYDONghk46oKaf1FmcGqzCt_yDCj/view
+
+
+   @ RAG: Big Document -> Documents Loaders → Text Splitter → Small Chunks → Embeddings → Vector DB → Chatbot Answer
+
+   - Documents Loaders  
+     Convert raw files into document objects that can be processed. It gives you things like metadata and content.  
+     PDF, Website and all—check in langraph websites
+
+   - Text Splitter  
+     Example:
+
+     text/docs_anything = """
+     React is a frontend library.
+     It is created by Meta.
+     Hooks are useful.
+     """
+
+     chunk_size = 40  
+     chunk_overlap = 10  
+
+     Output:
+     [
+       'React is a frontend library.',
+       'library.\nIt is created by Meta.',
+       'Meta.\nHooks are useful.'
+     ]
+
+   1. Character TextSplitter -> Simple text, basic testing, small projects
+   2. Recursive Character TextSplitter (MOST USED) -> PDFs, Websites, RAG apps, Production chatbot, Docs AI  
+      Meaning preserve karta hai.  
+      Difference b/w Character and Recursive Character TextSplitter
+
+      ## Character vs. Recursive Character TextSplitter
+
+      | Feature                | Character TextSplitter     | Recursive Character TextSplitter    |
+      |------------------------|----------------------------|-------------------------------------|
+      | Cutting method         | Blind cutting              | Smart, meaning-preserving cutting   |
+      | Word splitting         | Words can break            | Tries to keep words and sentences   |
+      | Use case               | Basic, small projects      | Production apps, better for docs    |
+      | Usage frequency        | Rarely used                | Most commonly used                  |
+      | Retrieval quality      | Poor (bad retrieval)       | Good (better retrieval)             |
+
+      Example:
+      Original Text:
+      "React is a frontend library. It is created by Meta. Hooks are useful."
+
+      Character TextSplitter (chunk_size=20):
+      - Chunk 1: "React is a fronte"
+      - Chunk 2: "nd library. Hook"
+      - Chunk 3: "s are useful."
+
+      Recursive Character TextSplitter (chunk_size=20):
+      - Chunk 1: "React is a frontend"
+      - Chunk 2: "library."
+      - Chunk 3: "Hooks are useful."
+   
+   3. TokenTextSplitter: OpenAI / Claude apps, Large prompts, Cost optimization, Advanced RAG
+       Why use it? -> Character-based text splitters are unpredictable in terms of token count and model cost, whereas LLMs process text as tokens. Using a TokenTextSplitter gives you precise control over costs and chunk sizes, making it ideal for large prompts and cost optimization.
+
+       React is a frontend library created by Meta
+       Code: TokenTextSplitter (chunk_size = 8)
+       ["React"," is"," a"," frontend"," library"," created"," by"," Meta"] = 8 tokens.
+ 
+   4. MarkdownHeaderTextSplitter – Use for: README, Documentation, Notes, Markdown blogs
+   5. HTMLHeaderTextSplitter – Use for: Website scraping, HTML docs, Blog parser
+   6. Semantic/Meaning-Based TextSplitter (in Developement)
+      - Chunks text by meaning, not by characters or tokens.
+      - Keeps full ideas or topics together in each chunk.
+
+   - Vector Embeddings / Database
+     Vector Store: A database optimized for storing and retrieving high-dimensional embeddings using Approximate Nearest Neighbor (ANN) algorithms.
+
+     
+     ## Relational (Normal) Database vs. Vector Database
+     
+     | Feature             | Relational (Normal) Database                        | Vector Database                                          |
+     |---------------------|-----------------------------------------------------|----------------------------------------------------------|
+     | Data stored         | Structured (tables: rows & columns, text, numbers)  | Embeddings (dense vectors: [0.23, 0.41, ...])            |
+     | Use cases           | User profiles, transactions, logs, banking          | Semantic/RAG/AI/Q&A search, recommendations              |
+     | Search capability   | Exact match/filtering (`SELECT WHERE ...`)          | Semantic/similarity search                               |
+     | Query type          | "Find movies where actor = 'Tom Hanks'"             | "Find movies about space travel"                         |
+     | Indexing            | B-Tree, Hash indexes                                | Vector indexes: HNSW, IVF, PQ                            |
+     | Comparison method   | Equality/range filters                              | Vector distance (cosine similarity, etc.)                |
+     | Strengths           | Fast, structured queries                            | Finds semantically similar items, powers AI search       |
+     
+   
+     ## Simple Example Flow
+     
+        10 Lakh Embeddings in DB - like  [0.24, -0.21, 0.67 ...]
+                ↓
+        Vector DB
+        (ANN Indexing: HNSW / IVF algorithms)
+        
+                ↓
+        100 Clusters (~10,000 embeddings each)
+        
+         ┌─────────────┐
+         │ Cluster 1   │ 
+         │ Cluster 2   │
+         │ Cluster 3   │
+         │ ...         │
+         │ Cluster 100 │
+         └─────────────┘
+        
+        User Query
+        "What is NLP?"
+                ↓
+        Query Embedding -  [0.44, -0.21, 0.67 ...]
+                ↓
+        Nearest Cluster Find
+        (example: Cluster 27)
+                ↓
+        Search only 10,000 vectors
+        NOT all 10 lakh
+                ↓
+        Top Similar Chunks
+                ↓
+        LLM
+                ↓
+        Final Answer
+
+   - Retrieval
+     User ke question ke according database se sabse relevant chunks nikalna. Retriever vector DB me search karega aur relevant chunks nikal ke LLM ko dega.
+     
+   1. By Data Source: Tumhara khud ka vector DB nahi bhi ho tab bhi data fetch kar sakte ho (Chat with outside/public data - nothings uses of document Loaders, TextSplitter and many more). like Wikipedia Retriever, Arxiv Retriever, PubMed Retriever and many more check in docs
+
+   2. By Retrieval Strategy: Data kis style me search hoga?
+    
+    Search Strategies: In most RAG (Retrieval-Augmented Generation) systems, retrievers mainly use three core retrieval strategies. These are the ones you’ll see most often in real projects andtutorials.
+    
+   1. Similarity Search (Most Common)
+      Query embedding sab chunks se compare hoti hai aur jo sabse similar hain unhe return kar diya jata hai.
+      retrieve top-K documents by comparing the query vector to document vectors using similarity metrics such as cosine similarity, dot product, or Euclidean distance. (study in ML)
+
+      Query: "What is gradient descent?"
+      Return:
+      Chunk 1: "Gradient descent is an optimization algorithm that iteratively adjusts parameters to minimize a loss function."
+      Chunk 2: "In machine learning, gradient descent helps to update model weights to reduce prediction errors."
+      Chunk 3: "There are different types of gradient descent algorithms: batch, stochastic, and mini-batch, each with its own trade-offs."
+      
+      Problem:
+      Sabhi chunks lagbhag wahi information de rahe hain ya kaafi overlapping hain, isme diversity nahi milti.
+
+   2. MMR (Max Marginal Relevance)
+      MMR ka use tab hota hai jab query se relevant chunks toh chahiye hi, lekin saath hi answer me kuch diversity bhi ho.
+      Ye approach top-K chunks me se aise chunks select karti hai jo na sirf query ke relevant hain, balki ek dusre se alag (non-redundant) bhi hain.
+
+      Example:
+      - Query: "What is gradient descent?"
+      - Retrieved Chunks:
+        Chunk 1: "Gradient descent is an optimization algorithm used across optimization and machine learning to minimize a given objective function."
+        Chunk 2: "Mini-batch gradient descent allows balancing accuracy and computational efficiency."
+        Chunk 3: "Unlike stochastic gradient descent, batch gradient descent evaluates the gradient on the entire dataset to update the model weights."
+
+      Yaha har chunk mein alag information mil rahi hai (types, applications, comparison), overlap kam hai aur answer me coverage better hota hai.
+      
+   3. MultiQuery Retriever
+      MultiQuery Retriever ka use tab hota hai jab ek single user query ko thoda alag-alag perspectives se phrase karke multiple queries generate ki jati hain. Har ek query se alag-alag relevant chunks retrieve hote hain, phir in sab results ko combine karke deduplicated, diverse, aur zyada informative context LLM ko diya jata hai.
+
+      Example:
+      - User Query: How does gradient descent work?
+      
+        User Query
+         ↓
+        LLM multiple queries banata hai
+         ↓
+        Retriever har query search karta hai
+         ↓
+        Results combine
+
+      - Generated Queries:
+        1. "Explain the steps of gradient descent algorithm."
+        2. "What are the types of gradient descent?"
+        3. "How is gradient descent used in machine learning?"
+      - Har query ke liye relevant chunks retrieve karo, phir sab ko combine & filter karo.
+
+      Iska fayda ye hai ki ek hi user query ke multiple aspects cover ho jate hain, aur specific wordings ki limitation kam hoti hai (i.e., query formulation bias kam hota hai).
+
+   - Runnable (LCEL — LangChain Expression Language)
+     Pehle "Chain" pattern tha; ab compose karne ke liye Runnable standard hai. Har step ek Runnable: same input/output contract, `.invoke()`, `.batch()`, `.stream()` support.
+   - Runnable = reusable unit (prompt, LLM, parser, retriever, custom function) jo chain me pipe `|` se jod sakte ho.
+
+   1. Sequential Runnable (pipe `|`)
+      - Purana: `LLMChain`, `SequentialChain` type flow — ab `runnable_a | runnable_b | runnable_c`.
+      - Output of A → input of B → input of C. Linear pipeline: prompt | llm | output_parser.
+      - Old vs new: same idea (order matters), bas syntax declarative aur type-friendly ho gaya.
+
+   2. Parallel Runnable (dict/tuple of runnables — "ek sath")
+      - Multiple branches parallel run: e.g. `{"summary": summarizer, "keywords": extractor}` — dono same input se start ho sakte hain, output dict me keys ke hisaab se.
+      - Use case: ek user message pe summary + sentiment + retrieval sab parallel, phir agla step in sab ko merge kare.
+      - LangChain docs: RunnableParallel / dict of runnables pattern check karo.
+
+   3. RunnableLambda (custom sync/async function)
+      - Jab tumhe plain Python logic chahiye (map, filter, format, DB call) bina naye Runnable class likhe.
+      - Example problem: invoke me 2 topics doge to do alag calls sochoge — agar dono ko ek saath fire kar doge to race / duplicate LLM spend; `RunnableLambda` se ek function me order control: pehle topic A process, phir B, ya ek hi merged prompt.
+      - "Ek baar ek hi chale" = sequential control ya single batched prompt lambda ke andar; parallel tabhi jab consciously RunnableParallel use ho.
+
+   4. RunnablePassthrough
+      - Input ko aage bina change pass karo, saath me aur keys add karo — zyada tar `assign` ke sath: purana state + naya field (e.g. retrieved_docs).
+      - RAG pattern: `RunnablePassthrough.assign(context=retriever)` — user query same rahe, saath me context attach ho jaye phir LLM ko jaye.
+
+   5. RunnableBinding / configurable
+      - Same runnable, alag temperature ya model — `.bind()` se tools ya stop sequences LLM pe attach; experiments ke liye useful.
+
+   @ Tools & Agents (Agent = Brain + Tools + Decision Making)
+   - LLM + Tools = Agent (high level): model decide karta hai kab tool call karna hai, output parse karke tool run, phir result wapas LLM — loop jab tak final answer.
+
+
+   - Built-in / ecosystem tools: LangChain / LangGraph docs me prebuilt list — web search, calculator, SQL, Wikipedia, etc. API keys env me rakho.
+
+   - Tavily (search API): production web search tool ke liye common choice; LangChain me `TavilySearchResults` type integrations — docs me exact import/package dekhna (version ke hisaab se badal sakta hai).
+
+   - Custom Tools: `@tool` decorator ya `StructuredTool` — name, description (LLM ke liye important: tool kab use karna hai), args schema (Pydantic), `func` implementation.
+   - Tool message flow: User → Agent → ToolCall → Tool output → Agent → final reply. LangGraph me nodes/edges se is flow ko explicit control mil sakta hai (reliable agents).
+   
+   Langchains: (Fixed flow) - RAG, Simple Agents like chatbots, AI Apps
+   LangGraph: (AI decides flow) - Complex Agents with multiple tools, Loops/decisions, Multi-step workflows
+
+  Project: Multi-AI Agent (Deep Research)
+
+  Tools.py: Tavily API (for Web Search) & BeautifulSoup (Result ko read/clean karta hai)
+  Step 1: Use Search Tool  
+    Call: web_search.invoke({"query": "What is LangChain?"})
+    - Gets results similar to Google Search.
+    - For each result, you receive:
+      • Title
+      • URL
+      • Snippet
+
+  Step 2: Use Scrape Tool  
+    For each item in results["results"]:
+      - Call scrape_url on the result's URL.
+      - Cleanly format each result (printed for 5 websites).
+    Actions performed:
+      • Opens the website
+      • Downloads the HTML
+      • Removes extra/unreadable data:
+          - script tags
+          - CSS
+          - navbar
+      • Extracts only the readable text
+
+  Agents.py – imports tools and other dependencies 
+  Purpose: Organizes the multi-step AI workflow. 
+ 
+  AI Workflow Overview
+ 
+  The AI system is responsible for:
+  - Deciding *which* tool to use
+  - Deciding *when* to use which tool
+  - Understanding *for what purpose* each tool is used 
+ 
+ Data Flow Diagram: 
+
+  User Topic
+      ↓
+  [Search Agent]
+      ↓
+  URLs + Snippets
+      ↓
+  [Reader Agent]
+      ↓
+  Website Text
+      ↓
+  [Writer Chain]
+      ↓
+  Research Report
+      ↓
+  [Critic Chain]
+      ↓
+  Feedback + Score
+
+  Component Roles:
+    - Search Agent: Acts as a Google researcher (fetches relevant content)
+    - Reader Agent: Reads/articles crawls and summarizes content from URLs
+    - Writer Chain: Writes the final research report in a structured manner
+    - Critic Chain: Reviews and scores the report, provides strengths & improvement areas
+
+   Pipeline.py  
+   Purpose: Manages the full end-to-end automated research process by orchestrating the agents and chains.
+
+   Steps:
+     1. Calls the Search Agent to gather relevant information about a user’s topic.
+     2. Hands search results to the Reader Agent to deeply extract content from top URLs.
+     3. Combines all gathered research and sends it to the Writer Chain to draft a structured research report.
+     4. Passes the report to the Critic Chain, which provides a review and feedback.
+
+   Key Points:
+    - Each phase’s output is saved in state for inspection/logging.
+    - The process is modular, so you can swap out/modify agents or steps as needed.
+    - Designed to be programmatically callable (run_research_pipeline(topic)), or run interactively as a script.
+
+
+  Difference b/w roles of tools.py, agents.py, aur pipeline.py teeno ka role alag hai, par ye sab milke AI workflow ko chalate hain:
+  
+    - tools.py:
+      Sab external actions ya capabilities (jaise web search, website scrape, database query) yahan define hote hain.
+      Basically, yahan wo functions/methods bante hain jo agents use karenge—ye ek tarah ka toolbox hai AI ke liye.
+
+    - agents.py:
+      Yahan pe “Agents” banaye jaate hain. Har agent ka role fix hai (jaise Search Agent ke paas web_search tool hai, Reader Agent ke paas scrape_url tool hai).
+      Ye agents tools ko use karne ki logic carry karte hain aur batate hain kis tool ko kab use karna hai.
+      Plus, writer/critic chain bhi yahin defined hote hain (LLM prompts + output parsers).
+
+    - pipeline.py:
+      Ye poore process ko orchestrate karta hai—matlab, step by step sare agents ko bulata hai (pehle search, phir reader, phir writer, phir critic).
+      Isme “run_research_pipeline(topic)” jaise functions milenge jo ek topic lete hain aur pura kaam ghumake final output/feedback nikalte hain.
+
+    Ek line me:
+      - tools.py = tools ka collection (kaam karne ke tareeke),
+      - agents.py = jo AI workers hain, jo decide karte hain kaunsa tool use hoga (logic + config),
+      - pipeline.py = conductor jo saare workers ko sequence me kaam karwata hai aur poora result ready karta hai.
